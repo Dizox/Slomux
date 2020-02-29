@@ -76,6 +76,7 @@ Provider.childContextTypes = {
 
 // actions
 const CHANGE_INTERVAL = 'CHANGE_INTERVAL'
+const SET_TIMER = 'SET_TIMER'
 
 // action creators
 const changeInterval = value => ({
@@ -83,12 +84,24 @@ const changeInterval = value => ({
   payload: value,
 })
 
+const setTimer = timer => ({
+  type: SET_TIMER,
+  payload: timer,
+})
 
 // reducers
 const reducer = (state, action) => {
   switch (action.type) {
     case CHANGE_INTERVAL:
-      return state + action.payload;
+      return {
+        ...state,
+        currentInterval: state.currentInterval + action.payload
+      };
+    case SET_TIMER:
+      return {
+        ...state,
+        timer: action.payload
+      };
     default:
       return state;
   }
@@ -102,8 +115,18 @@ class IntervalComponent extends React.Component {
       <div>
         <span>Интервал обновления секундомера: {this.props.currentInterval} сек.</span>
         <span>
-          <button onClick={() => this.props.changeInterval(-1)}>-</button>
-          <button onClick={() => this.props.changeInterval(1)}>+</button>
+          <button
+            onClick={() => this.props.changeInterval(-1)}
+            disabled={this.props.timer || this.props.currentInterval === 0}
+          >
+            -
+          </button>
+          <button
+            onClick={() => this.props.changeInterval(1)}
+            disabled={this.props.timer}
+          >
+            +
+          </button>
         </span>
       </div>
     )
@@ -111,14 +134,16 @@ class IntervalComponent extends React.Component {
 }
 
 const Interval = connect(
-  state => ({ currentInterval: state }),
+  state => ({
+    currentInterval: state.currentInterval,
+    timer: state.timer,
+  }),
   dispatch => ({ changeInterval: value => dispatch(changeInterval(value)) })
 )(IntervalComponent)
 
 class TimerComponent extends React.Component {
   state = {
     currentTime: 0,
-    timer: null
   }
 
   render() {
@@ -129,7 +154,7 @@ class TimerComponent extends React.Component {
           Секундомер: {this.state.currentTime} сек.
         </div>
         <div>
-          <button onClick={this.handleStart} disabled={this.state.timer}>Старт</button>
+          <button onClick={this.handleStart} disabled={this.props.timer}>Старт</button>
           <button onClick={this.handleStop}>Стоп</button>
         </div>
       </div>
@@ -142,22 +167,29 @@ class TimerComponent extends React.Component {
         currentTime: this.state.currentTime + this.props.currentInterval,
       });
     }, this.props.currentInterval * 1000)
-    this.setState({ timer });
+    this.props.setTimer(timer);
   }
 
   handleStop = () => {
-    clearInterval(this.state.timer);
-    this.setState({ currentTime: 0, timer: null });
+    clearInterval(this.props.timer);
+    this.setState({ currentTime: 0 });
+    this.props.setTimer(null);
   }
 }
 
 // initial state
 
-const initialState = 0;
+const initialState = {
+  currentInterval: 0,
+  timer: null
+};
 
 const Timer = connect(state => ({
-  currentInterval: state,
-}), () => { })(TimerComponent)
+  currentInterval: state.currentInterval,
+  timer: state.timer,
+}), (dispatch) => ({
+  setTimer: timer => dispatch(setTimer(timer))
+}))(TimerComponent)
 
 function App() {
   return (
