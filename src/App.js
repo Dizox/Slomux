@@ -117,7 +117,7 @@ class IntervalComponent extends React.Component {
         <span>
           <button
             onClick={() => this.props.changeInterval(-1)}
-            disabled={this.props.timer || this.props.currentInterval === 0}
+            disabled={this.props.timer || this.props.currentInterval <= 1}
           >
             -
           </button>
@@ -180,7 +180,7 @@ class TimerComponent extends React.Component {
 // initial state
 
 const initialState = {
-  currentInterval: 0,
+  currentInterval: 1,
   timer: null
 };
 
