@@ -40,7 +40,7 @@ const connect = (mapStateToProps, mapDispatchToProps) =>
         )
       }
 
-      componentDidUpdate() {
+      componentDidMount() {
         this.context.store.subscribe(this.handleChange)
       }
 
@@ -88,9 +88,9 @@ const changeInterval = value => ({
 const reducer = (state, action) => {
   switch (action.type) {
     case CHANGE_INTERVAL:
-      return state += action.payload
+      return state + action.payload;
     default:
-      return {}
+      return state;
   }
 }
 
@@ -110,16 +110,15 @@ class IntervalComponent extends React.Component {
   }
 }
 
-const Interval = connect(dispatch => ({
-  changeInterval: value => dispatch(changeInterval(value)),
-}),
-  state => ({
-    currentInterval: state,
-  }))(IntervalComponent)
+const Interval = connect(
+  state => ({ currentInterval: state }),
+  dispatch => ({ changeInterval: value => dispatch(changeInterval(value)) })
+)(IntervalComponent)
 
 class TimerComponent extends React.Component {
   state = {
-    currentTime: 0
+    currentTime: 0,
+    timer: null
   }
 
   render() {
@@ -130,33 +129,39 @@ class TimerComponent extends React.Component {
           Секундомер: {this.state.currentTime} сек.
         </div>
         <div>
-          <button onClick={this.handleStart}>Старт</button>
+          <button onClick={this.handleStart} disabled={this.state.timer}>Старт</button>
           <button onClick={this.handleStop}>Стоп</button>
         </div>
       </div>
     )
   }
 
-  handleStart() {
-    setTimeout(() => this.setState({
-      currentTime: this.state.currentTime + this.props.currentInterval,
-    }), this.props.currentInterval)
+  handleStart = () => {
+    const timer = setInterval(() => {
+      this.setState({
+        currentTime: this.state.currentTime + this.props.currentInterval,
+      });
+    }, this.props.currentInterval * 1000)
+    this.setState({ timer });
   }
 
-  handleStop() {
-    this.setState({ currentTime: 0 })
+  handleStop = () => {
+    clearInterval(this.state.timer);
+    this.setState({ currentTime: 0, timer: null });
   }
 }
+
+// initial state
+
+const initialState = 0;
 
 const Timer = connect(state => ({
   currentInterval: state,
 }), () => { })(TimerComponent)
 
-
-
 function App() {
   return (
-    <Provider store={createStore(reducer)}>
+    <Provider store={createStore(reducer, initialState)}>
       <Timer />
     </Provider>
   );
